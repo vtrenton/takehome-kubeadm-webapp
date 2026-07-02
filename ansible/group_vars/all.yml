@@ -1,0 +1,7 @@
+kubernetes_minor_version: "v1.36"
+
+pod_network_cidr: "10.244.0.0/16"
+service_cidr: "10.96.0.0/12"
+
+containerd_config_path: "/etc/containerd/config.toml"
+kubeconfig_local_path: "../out/admin.conf"

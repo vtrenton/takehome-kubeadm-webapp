@@ -1,0 +1,20 @@
+---
+- name: Prepare all kubeadm nodes
+  hosts: kube_cluster
+  become: true
+  roles:
+    - common
+    - containerd
+    - kubernetes-packages
+
+- name: Initialize Kubernetes control plane
+  hosts: control_plane
+  become: true
+  roles:
+    - control-plane
+
+- name: Join Kubernetes workers
+  hosts: workers
+  become: true
+  roles:
+    - workers

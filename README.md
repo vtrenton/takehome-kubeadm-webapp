@@ -1,6 +1,13 @@
 # kubeadm Gateway take-home
 
-This repository starts with Terraform infrastructure for a kubeadm-based Kubernetes cluster on EC2.
+This repository builds a kubeadm-based Kubernetes cluster on AWS EC2.
+
+The project intentionally separates infrastructure provisioning from Kubernetes bootstrap:
+
+- Terraform provisions AWS infrastructure.
+- Ansible installs and initializes Kubernetes with kubeadm.
+- Cilium is installed after kubeadm as the cluster CNI.
+- Argo CD will later manage platform/application resources.
 
 ## Terraform scope
 
@@ -10,19 +17,40 @@ Terraform owns:
 - EC2 key pair
 - one control-plane EC2 instance
 - two worker EC2 instances by default
-- node security group
+- security groups for common node traffic, control-plane API access, and worker edge traffic
 - public AWS Network Load Balancer
 - TCP 80/443 listeners
 - target group attachments to worker instances only
 - generated Ansible inventory output
 
-Terraform intentionally does **not** install Kubernetes. Ansible will consume the generated inventory and run the kubeadm bootstrap flow.
+Terraform intentionally does **not** install Kubernetes. Ansible consumes the generated inventory and runs the kubeadm bootstrap flow.
+
+## Ansible scope
+
+Ansible owns the kubeadm node/bootstrap flow:
+
+- install base OS packages
+- disable swap
+- configure required kernel modules and sysctls
+- install and configure containerd
+- install `kubeadm`, `kubelet`, and `kubectl`
+- run `kubeadm init` on the control-plane node
+- join worker nodes with `kubeadm join`
+- fetch the admin kubeconfig to `out/admin.conf`
+
+Ansible intentionally does **not** install Cilium, Argo CD, Traefik, cert-manager, Gateway API resources, or the Nginx application.
 
 ## First run
 
+Generate a project-local SSH key. This writes keys into `out/` and does not touch `~/.ssh`.
+
 ```bash
 ./scripts/generate-ssh-key.sh
+```
 
+Provision AWS infrastructure:
+
+```bash
 cd terraform
 cp terraform.tfvars.example terraform.tfvars
 
@@ -32,6 +60,50 @@ terraform validate
 terraform apply
 
 terraform output -raw ansible_inventory > ../ansible/inventory.ini
+cd ..
+```
+
+Validate Ansible connectivity:
+
+```bash
+ansible -i ansible/inventory.ini all \
+  -m ping \
+  --private-key out/kubeadm-gateway_ed25519 \
+  --ssh-common-args="-o StrictHostKeyChecking=accept-new"
+```
+
+Run the kubeadm bootstrap playbook:
+
+```bash
+ANSIBLE_CONFIG=ansible/ansible.cfg ansible-playbook ansible/site.yml \
+  --private-key out/kubeadm-gateway_ed25519
+```
+
+Use the generated kubeconfig:
+
+```bash
+export KUBECONFIG=out/admin.conf
+kubectl get nodes
+```
+
+At this point the nodes are expected to be `NotReady` until the CNI is installed.
+
+Example:
+
+```text
+NAME             STATUS     ROLES           AGE     VERSION
+ip-10-50-1-159   NotReady   <none>          2m33s   v1.36.2
+ip-10-50-1-5     NotReady   control-plane   3m21s   v1.36.2
+ip-10-50-2-219   NotReady   <none>          2m33s   v1.36.2
+```
+
+## Next step: Cilium
+
+kubeadm does not install a CNI. Cilium will be installed as the next bootstrap step. After Cilium is installed and healthy, the nodes should transition to `Ready`.
+
+```bash
+export KUBECONFIG=out/admin.conf
+# ./scripts/bootstrap-cilium.sh
 ```
 
 ## Design notes
@@ -39,6 +111,14 @@ terraform output -raw ansible_inventory > ../ansible/inventory.ini
 The public NLB forwards TCP 80/443 directly to the worker EC2 instances. Traefik will later run on worker nodes and bind 80/443, allowing TLS termination inside Kubernetes via Gateway API and cert-manager.
 
 The control-plane node is not registered in the NLB target groups.
+
+The security group model is intentionally split:
+
+- common node security group: SSH, unrestricted private node-to-node traffic, outbound internet
+- control-plane API security group: Kubernetes API port 6443
+- worker edge security group: HTTP/HTTPS ports 80/443
+
+For challenge/reviewer convenience, SSH and Kubernetes API access may be opened broadly in `terraform.tfvars`. This is not a production security posture. A production deployment should restrict SSH/API access to trusted operator CIDRs, a bastion, VPN, or AWS Systems Manager Session Manager.
 
 ## Local output directory
 

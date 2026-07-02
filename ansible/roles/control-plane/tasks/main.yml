@@ -1,0 +1,60 @@
+---
+- name: Check whether control plane is already initialized
+  ansible.builtin.stat:
+    path: /etc/kubernetes/admin.conf
+  register: kubeadm_admin_conf
+
+- name: Initialize control plane with kubeadm
+  ansible.builtin.command: 
+    cmd: >-
+      kubeadm init
+      --apiserver-advertise-address={{ private_ip }}
+      --apiserver-cert-extra-sans={{ ansible_host }}
+      --pod-network-cidr={{ pod_network_cidr }}
+      --service-cidr={{ service_cidr }}
+  when: not kubeadm_admin_conf.stat.exists
+  register: kubeadm_init
+
+- name: Create root kubeconfig directory
+  ansible.builtin.file:
+    path: /root/.kube
+    state: directory
+    mode: "0700"
+
+- name: Copy admin.conf for root on control plane
+  ansible.builtin.copy:
+    src: /etc/kubernetes/admin.conf
+    dest: /root/.kube/config
+    remote_src: true
+    mode: "0600"
+
+- name: Generate fresh kubeadm worker join command
+  ansible.builtin.command: kubeadm token create --print-join-command
+  register: kubeadm_join_command
+  changed_when: false
+
+- name: Store join command as control-plane fact
+  ansible.builtin.set_fact:
+    worker_join_command: "{{ kubeadm_join_command.stdout }}"
+
+- name: Ensure local out directory exists
+  ansible.builtin.file:
+    path: "{{ kubeconfig_local_path | dirname }}"
+    state: directory
+    mode: "0700"
+  delegate_to: localhost
+  become: false
+
+- name: Fetch admin kubeconfig locally
+  ansible.builtin.fetch:
+    src: /etc/kubernetes/admin.conf
+    dest: "{{ kubeconfig_local_path }}"
+    flat: true
+
+- name: Point local kubeconfig at control-plane public IP
+  ansible.builtin.replace:
+    path: "{{ kubeconfig_local_path }}"
+    regexp: 'server: https://[^:]+:6443'
+    replace: "server: https://{{ ansible_host }}:6443"
+  delegate_to: localhost
+  become: false
