@@ -1,0 +1,15 @@
+project_name = "kubeadm-gateway"
+aws_region   = "us-east-2"
+
+# Use an absolute path.
+ssh_public_key_path = "/home/trent/.ssh/id_rsa.pub"
+
+# Replace with your current public IP, e.g. curl -4 ifconfig.me
+allowed_ssh_cidr = "203.0.113.10/32"
+
+# Public demo access for the NLB path. Tighten this if you only need reviewer IPs.
+allowed_web_cidr_blocks = ["0.0.0.0/0"]
+
+instance_type       = "t3.medium"
+worker_count        = 2
+root_volume_size_gb = 30
