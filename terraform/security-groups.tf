@@ -20,7 +20,7 @@ resource "aws_vpc_security_group_ingress_rule" "ssh_from_operator" {
 resource "aws_vpc_security_group_ingress_rule" "kube_api_from_operator" {
   security_group_id = aws_security_group.nodes.id
   description       = "Kubernetes API from operator"
-  cidr_ipv4         = var.allowed_ssh_cidr
+  cidr_ipv4         = var.allowed_kube_api_cidr
   ip_protocol       = "tcp"
   from_port         = 6443
   to_port           = 6443

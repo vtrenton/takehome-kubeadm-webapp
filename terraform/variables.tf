@@ -29,13 +29,21 @@ variable "public_subnet_cidrs" {
 }
 
 variable "ssh_public_key_path" {
-  description = "Path to the SSH public key Terraform should register as an EC2 key pair. Use an absolute path; Terraform does not reliably expand '~'."
+  description = "Path to the SSH public key Terraform should register as an EC2 key pair. Relative paths are resolved from the terraform/ directory."
   type        = string
+  default     = "../out/kubeadm-gateway_ed25519.pub"
 }
 
 variable "allowed_ssh_cidr" {
-  description = "CIDR allowed to SSH to nodes and access the Kubernetes API. Use your current public IP as /32."
+  description = "CIDR allowed to SSH to nodes. Use your current public IP as /32. Default is open to Public"
   type        = string
+  default     = "0.0.0.0/0"
+}
+
+variable "allowed_kube_api_cidr" {
+  description = "CIDR allowed to SSH to access the Kubernetes API. Use your current public IP as /32. Default is open to Public"
+  type        = string
+  default     = "0.0.0.0/0"
 }
 
 variable "allowed_web_cidr_blocks" {

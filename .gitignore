@@ -1,0 +1,52 @@
+# Terraform
+**/.terraform/*
+*.tfstate
+*.tfstate.*
+crash.log
+crash.*.log
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+.terraform.lock.hcl
+
+# Local Terraform variables
+*.tfvars
+*.tfvars.json
+!terraform.tfvars.example
+
+# Project-local generated output
+# This directory may contain SSH keys, kubeconfigs, CSRs, certs, rendered inventories,
+# generated manifests, temporary files, and other sensitive local artifacts.
+out/*
+out/**
+
+# Keep the directory visible if you choose to add a placeholder
+!out/.gitkeep
+
+# Ansible local/generated files
+ansible/inventory.ini
+ansible/*.retry
+*.retry
+
+# Kubernetes credentials and cert material
+kubeconfigs/
+*.key
+*.crt
+*.csr
+*.pem
+*.kubeconfig
+
+# Helm/generated chart artifacts
+charts/**/*.tgz
+Chart.lock
+charts/**/charts/
+
+# Editor / OS junk
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*~
+.vscode/
+.idea/

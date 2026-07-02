@@ -1,6 +1,6 @@
 resource "aws_key_pair" "operator" {
   key_name   = "${var.project_name}-operator"
-  public_key = file(var.ssh_public_key_path)
+  public_key = file(local.ssh_public_key_path)
 
   tags = {
     Name = "${var.project_name}-operator"

@@ -29,6 +29,8 @@ locals {
     }
   }
 
+  ssh_public_key_path = abspath("${path.module}/${var.ssh_public_key_path}")
+
   common_tags = {
     Project   = var.project_name
     ManagedBy = "terraform"
