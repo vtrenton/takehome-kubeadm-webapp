@@ -36,6 +36,10 @@ echo "Waiting for nodes and CoreDNS..."
 kubectl wait --for=condition=Ready nodes --all --timeout=10m
 kubectl -n kube-system rollout status deployment/coredns --timeout=10m
 
+echo "Installing Gateway API CRDs..."
+kubectl apply --server-side -f \
+  https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.6.0/standard-install.yaml
+
 echo "Installing metrics-server..."
 helm upgrade --install metrics-server metrics-server/metrics-server \
   --namespace kube-system \

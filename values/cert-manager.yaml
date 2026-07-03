@@ -1,0 +1,3 @@
+# install all the CRDs while installing the chart. makes automation easier.
+crds:
+  enabled: true

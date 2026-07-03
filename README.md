@@ -6,8 +6,8 @@ The project intentionally separates infrastructure provisioning, kubeadm bootstr
 
 - Terraform provisions AWS infrastructure.
 - Ansible installs and initializes Kubernetes with kubeadm.
-- A shell installer deploys the core cluster services: Cilium, metrics-server, and Argo CD.
-- Argo CD will later manage platform/application resources.
+- A shell installer deploys the core cluster services: Cilium, Gateway API CRDs, metrics-server, and Argo CD.
+- Argo CD will later manage platform/application resources through Kubernetes `Application` CRDs.
 
 ## Terraform scope
 
@@ -38,17 +38,20 @@ Ansible owns the kubeadm node/bootstrap flow:
 - join worker nodes with `kubeadm join`
 - fetch the admin kubeconfig to `out/admin.conf`
 
-Ansible intentionally does **not** install Cilium, Argo CD, Traefik, cert-manager, Gateway API resources, or the Nginx application.
+Ansible intentionally does **not** install Cilium, Gateway API CRDs, Argo CD, Traefik, cert-manager, or the Nginx application.
 
 ## Core services scope
 
 The core services installer owns the first post-kubeadm services:
 
 - Cilium as the CNI
+- Gateway API CRDs for `GatewayClass`, `Gateway`, `HTTPRoute`, and related Gateway API resources
 - metrics-server for Kubernetes resource metrics
 - Argo CD as the GitOps controller
 
-The installer intentionally keeps chart configuration in project values files instead of embedding inline YAML in the script.
+Gateway API CRDs are installed here instead of through Argo CD so Traefik can be deployed later without relying on asynchronous CRD ordering. Traefik's Gateway API provider expects the Gateway API CRDs to already exist.
+
+The installer intentionally keeps Helm chart configuration in project values files instead of embedding inline YAML in the script.
 
 Expected files:
 
@@ -58,6 +61,8 @@ values/cilium.yaml
 values/metrics-server.yaml
 values/argocd.yaml
 ```
+
+The script installs Gateway API CRDs directly with `kubectl apply --server-side` from the upstream Gateway API standard install manifest.
 
 ## First run
 
@@ -132,6 +137,16 @@ out/admin.conf
 
 It can be run from the project root or from inside the `scripts/` directory.
 
+The installer performs these steps:
+
+```text
+1. Install Cilium
+2. Wait for nodes and CoreDNS to become ready
+3. Install Gateway API CRDs
+4. Install metrics-server
+5. Install Argo CD
+```
+
 After the installer completes, verify the cluster:
 
 ```bash
@@ -142,7 +157,39 @@ kubectl get pods -A
 kubectl top nodes
 ```
 
+Verify the Gateway API CRDs:
+
+```bash
+kubectl get crd gatewayclasses.gateway.networking.k8s.io
+kubectl get crd gateways.gateway.networking.k8s.io
+kubectl get crd httproutes.gateway.networking.k8s.io
+```
+
 The nodes should now be `Ready` after Cilium is healthy.
+
+Argo CD is installed as the GitOps controller, but this demo does not require using the Argo CD UI. Later phases will create Argo CD `Application` resources directly with `kubectl`.
+
+## Next platform phase
+
+After core services are installed, Argo CD can manage the remaining platform components.
+
+Expected next files:
+
+```text
+argoapps/cert-manager.yaml
+argoapps/traefik.yaml
+
+values/cert-manager.yaml
+values/traefik.yaml
+```
+
+Apply the Argo CD applications with:
+
+```bash
+kubectl apply -f argoapps/
+```
+
+Gateway API CRDs are not represented as an Argo CD application in this repository because they are installed during core bootstrap before Traefik.
 
 ## Design notes
 
@@ -158,7 +205,7 @@ The security group model is intentionally split:
 
 For challenge/reviewer convenience, SSH and Kubernetes API access may be opened broadly in `terraform.tfvars`. This is not a production security posture. A production deployment should restrict SSH/API access to trusted operator CIDRs, a bastion, VPN, or AWS Systems Manager Session Manager.
 
-The core services installer intentionally uses the latest chart versions from each Helm repository for low-friction challenge deployment. Production usage should pin chart versions for repeatability.
+The core services installer intentionally uses the latest chart versions from each Helm repository for low-friction challenge deployment. Production usage should pin chart versions for repeatability. The Gateway API CRD install URL should also be pinned for repeatability.
 
 ## Local output directory
 
