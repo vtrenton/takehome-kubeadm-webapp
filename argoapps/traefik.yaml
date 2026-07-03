@@ -1,0 +1,55 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: traefik
+  namespace: argocd
+spec:
+  project: default
+
+  source:
+    repoURL: ghcr.io/traefik/helm
+    chart: traefik
+    targetRevision: 39.0.7
+    helm:
+      releaseName: traefik
+      valuesObject:
+        deployment:
+          kind: DaemonSet
+
+        service:
+          type: ClusterIP
+
+        ingressClass:
+          enabled: true
+          isDefaultClass: true
+          name: traefik
+
+        providers:
+          kubernetesIngress:
+            enabled: true
+          kubernetesGateway:
+            enabled: true
+
+        gateway:
+          enabled: true
+
+        gatewayClass:
+          enabled: true
+          name: traefik
+
+        ports:
+          web:
+            hostPort: 80
+          websecure:
+            hostPort: 443
+
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: traefik
+
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
