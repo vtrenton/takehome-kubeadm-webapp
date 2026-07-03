@@ -1,0 +1,11 @@
+# Explicatly state we are not leveraging KPR
+kubeProxyReplacement: false
+
+# We need to manually set the pod address space 
+# so it does NOT overlap with the AWS VPC
+ipam:
+  mode: cluster-pool
+  operator:
+    clusterPoolIPv4PodCIDRList:
+      - 10.244.0.0/16
+    clusterPoolIPv4MaskSize: 24

@@ -1,0 +1,5 @@
+# Metrics server can have some trouble validating certificates.
+# This solves that
+args:
+  - --kubelet-preferred-address-types=InternalIP,ExternalIP,Hostname
+  - --kubelet-insecure-tls

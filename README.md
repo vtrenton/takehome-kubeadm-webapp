@@ -2,11 +2,11 @@
 
 This repository builds a kubeadm-based Kubernetes cluster on AWS EC2.
 
-The project intentionally separates infrastructure provisioning from Kubernetes bootstrap:
+The project intentionally separates infrastructure provisioning, kubeadm bootstrap, and platform/application installation:
 
 - Terraform provisions AWS infrastructure.
 - Ansible installs and initializes Kubernetes with kubeadm.
-- Cilium is installed after kubeadm as the cluster CNI.
+- A shell installer deploys the core cluster services: Cilium, metrics-server, and Argo CD.
 - Argo CD will later manage platform/application resources.
 
 ## Terraform scope
@@ -39,6 +39,25 @@ Ansible owns the kubeadm node/bootstrap flow:
 - fetch the admin kubeconfig to `out/admin.conf`
 
 Ansible intentionally does **not** install Cilium, Argo CD, Traefik, cert-manager, Gateway API resources, or the Nginx application.
+
+## Core services scope
+
+The core services installer owns the first post-kubeadm services:
+
+- Cilium as the CNI
+- metrics-server for Kubernetes resource metrics
+- Argo CD as the GitOps controller
+
+The installer intentionally keeps chart configuration in project values files instead of embedding inline YAML in the script.
+
+Expected files:
+
+```text
+scripts/core-services-installer.sh
+values/cilium.yaml
+values/metrics-server.yaml
+values/argocd.yaml
+```
 
 ## First run
 
@@ -97,14 +116,33 @@ ip-10-50-1-5     NotReady   control-plane   3m21s   v1.36.2
 ip-10-50-2-219   NotReady   <none>          2m33s   v1.36.2
 ```
 
-## Next step: Cilium
+## Install core services
 
-kubeadm does not install a CNI. Cilium will be installed as the next bootstrap step. After Cilium is installed and healthy, the nodes should transition to `Ready`.
+Run the core services installer:
+
+```bash
+./scripts/core-services-installer.sh
+```
+
+The script uses the project kubeconfig at:
+
+```text
+out/admin.conf
+```
+
+It can be run from the project root or from inside the `scripts/` directory.
+
+After the installer completes, verify the cluster:
 
 ```bash
 export KUBECONFIG=out/admin.conf
-# ./scripts/bootstrap-cilium.sh
+
+kubectl get nodes -o wide
+kubectl get pods -A
+kubectl top nodes
 ```
+
+The nodes should now be `Ready` after Cilium is healthy.
 
 ## Design notes
 
@@ -119,6 +157,8 @@ The security group model is intentionally split:
 - worker edge security group: HTTP/HTTPS ports 80/443
 
 For challenge/reviewer convenience, SSH and Kubernetes API access may be opened broadly in `terraform.tfvars`. This is not a production security posture. A production deployment should restrict SSH/API access to trusted operator CIDRs, a bastion, VPN, or AWS Systems Manager Session Manager.
+
+The core services installer intentionally uses the latest chart versions from each Helm repository for low-friction challenge deployment. Production usage should pin chart versions for repeatability.
 
 ## Local output directory
 
