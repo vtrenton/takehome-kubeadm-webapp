@@ -1,6 +1,12 @@
 # Explicatly state we are not leveraging KPR
 kubeProxyReplacement: false
 
+# Enable Kubernetes hostPort support through the standard CNI portmap plugin.
+# Traefik uses hostPort 80/443 so the Terraform-managed NLB can target
+# the worker nodes directly.
+cni:
+  chainingMode: portmap
+
 # We need to manually set the pod address space 
 # so it does NOT overlap with the AWS VPC
 ipam:
