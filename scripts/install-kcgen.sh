@@ -14,5 +14,4 @@ command -v go >/dev/null || {
 echo "Installing kcgen into ${BIN_DIR}..."
 GOBIN="${BIN_DIR}" go install github.com/vtrenton/kcgen@master
 
-echo "kcgen installed:"
-"${BIN_DIR}/kcgen" --help || true
+echo "kcgen installed"
