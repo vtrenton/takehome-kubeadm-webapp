@@ -32,8 +32,9 @@ route:
     create: true
     name: ""
     gatewayClassName: traefik
-    httpSectionName: http
-    httpsSectionName: https
+    httpSectionName: web
+    httpsSectionName: websecure
+    listenerHostname: ""
 
 tls:
   enabled: true

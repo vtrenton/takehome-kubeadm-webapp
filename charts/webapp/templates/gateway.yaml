@@ -18,7 +18,9 @@ spec:
           from: Same
     {{- if .Values.tls.enabled }}
     - name: {{ .Values.route.gateway.httpsSectionName | quote }}
-      hostname: {{ include "webapp.hostname" . | quote }}
+      {{- with .Values.route.gateway.listenerHostname }}
+      hostname: {{ . | quote }}
+      {{- end }}
       port: 443
       protocol: HTTPS
       tls:
