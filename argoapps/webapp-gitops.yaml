@@ -1,0 +1,42 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: webapp-gitops
+  namespace: argocd
+spec:
+  project: default
+
+  source:
+    # Update this after publishing/forking the repo.
+    repoURL: https://github.com/vtrenton/takehome-kubeadm-webapp.git
+    targetRevision: HEAD
+    path: charts/webapp
+    helm:
+      releaseName: webapp-gitops
+      valuesObject:
+        fullnameOverride: webapp-gitops
+
+        route:
+          type: gateway
+          hostname: webapp-gitops.local
+
+        tls:
+          enabled: true
+
+        certManager:
+          enabled: true
+          selfSigned:
+            enabled: true
+          certificate:
+            enabled: true
+
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: nginx-gitops
+
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true

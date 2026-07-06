@@ -9,11 +9,13 @@ metadata:
   name: app-deployer
   namespace: nginx-manual
 rules:
+  # Core app resources plus Helm v3 release storage.
   - apiGroups: [""]
     resources:
       - configmaps
       - services
       - pods
+      - secrets
     verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
 
   - apiGroups: ["apps"]
@@ -29,11 +31,13 @@ rules:
 
   - apiGroups: ["gateway.networking.k8s.io"]
     resources:
+      - gateways
       - httproutes
     verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
 
   - apiGroups: ["cert-manager.io"]
     resources:
+      - issuers
       - certificates
     verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
 ---

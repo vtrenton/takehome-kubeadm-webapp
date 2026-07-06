@@ -1,0 +1,13 @@
+route:
+  type: ingress
+  hostname: webapp.local
+
+tls:
+  enabled: true
+
+certManager:
+  enabled: true
+  selfSigned:
+    enabled: true
+  certificate:
+    enabled: true

@@ -1,0 +1,31 @@
+{{- if eq .Values.route.type "ingress" }}
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ include "webapp.fullname" . }}
+  labels:
+    {{- include "webapp.labels" . | nindent 4 }}
+  {{- with .Values.route.ingress.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  ingressClassName: {{ .Values.route.ingress.className | quote }}
+  {{- if .Values.tls.enabled }}
+  tls:
+    - hosts:
+        - {{ include "webapp.hostname" . | quote }}
+      secretName: {{ include "webapp.tlsSecretName" . }}
+  {{- end }}
+  rules:
+    - host: {{ include "webapp.hostname" . | quote }}
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ include "webapp.fullname" . }}
+                port:
+                  number: {{ .Values.service.port }}
+{{- end }}

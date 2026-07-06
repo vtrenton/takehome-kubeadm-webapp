@@ -1,0 +1,35 @@
+{{- if and .Values.tls.enabled .Values.certManager.enabled .Values.certManager.selfSigned.enabled }}
+apiVersion: cert-manager.io/v1
+kind: Issuer
+metadata:
+  name: {{ include "webapp.selfSignedIssuerName" . }}
+  labels:
+    {{- include "webapp.labels" . | nindent 4 }}
+spec:
+  selfSigned: {}
+---
+{{- end }}
+{{- if and .Values.tls.enabled .Values.certManager.enabled .Values.certManager.certificate.enabled }}
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: {{ include "webapp.fullname" . }}
+  labels:
+    {{- include "webapp.labels" . | nindent 4 }}
+spec:
+  secretName: {{ include "webapp.tlsSecretName" . }}
+  duration: {{ .Values.certManager.certificate.duration | quote }}
+  renewBefore: {{ .Values.certManager.certificate.renewBefore | quote }}
+  dnsNames:
+    - {{ include "webapp.hostname" . | quote }}
+  issuerRef:
+    {{- if .Values.certManager.selfSigned.enabled }}
+    name: {{ include "webapp.selfSignedIssuerName" . }}
+    kind: Issuer
+    group: cert-manager.io
+    {{- else }}
+    name: {{ required "certManager.certificate.issuerRef.name is required when selfSigned.enabled=false" .Values.certManager.certificate.issuerRef.name }}
+    kind: {{ .Values.certManager.certificate.issuerRef.kind | default "Issuer" }}
+    group: {{ .Values.certManager.certificate.issuerRef.group | default "cert-manager.io" }}
+    {{- end }}
+{{- end }}
