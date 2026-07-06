@@ -11,7 +11,7 @@ spec:
   listeners:
     - name: {{ .Values.route.gateway.httpSectionName | quote }}
       hostname: {{ include "webapp.hostname" . | quote }}
-      port: 80
+      port: {{ .Values.route.gateway.httpPort }}
       protocol: HTTP
       allowedRoutes:
         namespaces:
@@ -21,7 +21,7 @@ spec:
       {{- with .Values.route.gateway.listenerHostname }}
       hostname: {{ . | quote }}
       {{- end }}
-      port: 443
+      port: {{ .Values.route.gateway.httpsPort }}
       protocol: HTTPS
       tls:
         mode: Terminate

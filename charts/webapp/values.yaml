@@ -34,6 +34,14 @@ route:
     gatewayClassName: traefik
     httpSectionName: web
     httpsSectionName: websecure
+    # These must match Traefik's entryPoint ports (traefik chart's
+    # `ports.web.port` / `ports.websecure.port`), not the externally
+    # exposed Service/NLB port. Traefik's Gateway provider matches a
+    # Gateway listener's port directly against its entryPoint port, and
+    # this cluster's Traefik entryPoints are on 8000/8443 (the Service
+    # still fronts them as 80/443).
+    httpPort: 8000
+    httpsPort: 8443
     listenerHostname: ""
 
 tls:

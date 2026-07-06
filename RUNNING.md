@@ -6,6 +6,7 @@ Note: please make sure to run these commands at the project root!
 
 ## Important: Prerequisites!
 ```
+AWS account/awscli configured (demo on ec2)
 Terraform/OpenTofu (both work and tested)
 ansible
 kubectl
