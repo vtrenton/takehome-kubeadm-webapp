@@ -5,7 +5,7 @@ Follow each section step-by-step to build the demo environments
 Note: please make sure to run these commands at the project root!
 
 ## Important: Prerequisites!
-```bash
+```
 Terraform/OpenTofu (both work and tested)
 ansible
 kubectl

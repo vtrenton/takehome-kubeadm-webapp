@@ -6,7 +6,7 @@ Else I created a script of every step in the RUNNING docs called go.sh
 
 Note: please run this from the project directory root!
 
-```
+```bash
 chmod +x go.sh
 ./go.sh
 ```
