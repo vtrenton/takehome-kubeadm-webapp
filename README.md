@@ -4,9 +4,8 @@
 Check out the RUNNING.md to see how to get the enviroment up and running step-by-step.
 Else I created a script of every step in the RUNNING docs called go.sh
 
-Note: please run this from the project directory root!
+**Note: please run this from the project directory root!
 
 ```bash
-chmod +x go.sh
 ./go.sh
 ```
