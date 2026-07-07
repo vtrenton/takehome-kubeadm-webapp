@@ -119,7 +119,7 @@ For the process of generating the "user" kubeconfig it took a non-standard appro
 
 ***Namely, I built a go program to do it.***
 
-The Source for this program can be found (here)[https://github.com/vtrenton/kcgen]
+The Source for this program can be found [here](https://github.com/vtrenton/kcgen)
 
 ***Why?***
 While this may be uncanny there are a few reasons I did this:
