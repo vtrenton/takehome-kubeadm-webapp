@@ -29,12 +29,17 @@ While I did make sure basic security was accounted for here there a few areas I 
 
 With Security being a tradeoff between complexity cost and Defense I feel I provided the most practical defaults for the request.
 
+***Why the LB?***
+One of the requirements was to have more than a single worker node. Putting a LoadBalancer in front of the nodes was a low cost way of creating HA.
+
 ### Ansible - Machine configuration
 With the core infrastructure set up we will have access to some bare bones linux nodes. We need to provision them with kubeadm to create a kubernetes cluster. This Ansible code sets up the machines as per install requirements of the [official kubernetes installation guide](https://kubernetes.io/docs/setup/production-environment/tools/kubeadm/install-kubeadm/).
 
 Having ansible is very useful going forward as it allows us to collectively troubleshoot and configure all the nodes to keep them uniform going forward.
 
-
+For example I can run several commands on every node for troubleshoot!
+```
+```
 
 This ansible script will do the following:
 ```
@@ -90,4 +95,61 @@ Finally we install ArgoCD. Argo is going to help us stop doing hands on administ
 From this point forward it is optimal to manage deployments and lifecycle of everything via ArgoCD "Applications". This allows us to move off the cluster and into a more developer familiar ecosystem - git!
 
 For a production deployment I would normally leverage the [App-of-Apps](https://argo-cd.readthedocs.io/en/stable/operator-manual/cluster-bootstrapping/#app-of-apps-pattern-alternative) pattern that involves having a single repo that Argo watches with "Application" deployments. When updated Argo will install the Application which will instruct Argo to install the application referenced by the "Application" CRD.
+
+The core applications that Argo will install are:
+```
+Cert-Manager
+Traefik
+```
+
+Traefik notably will be deployed in HostPort Node. This means that each of the machines that it is deployed on (Not the control-plane) will set up a listener on 80/443. In the Terraform step we already configured a layer 4 loadbalancer to front the worker nodes here so we should be able to hit the loadbalancer and successfully get a 404 response from Traefik.
+
+***Note about Cilium:***
+It's worth noting that using cilium without KPR (Kube-Proxy Replacement) requires an additional tool to manage HostPort Deployment for this reason Cilium needs to be deployed with `cni.chainingMode=portmap`. which leverages the Cilium "portmap" plugin for publishing node ports.
+
+***Note about Gateway-api:***
+Externally, I can hit gateway-api using the published web/websecure ports. But Gateway Objects need to hit the trafik pod on it's "gateway" ports which are `8000` for `web` and `8443` for `websecure` respectively.
+
+
+## Odd-balls or "why did you include that?"
+From this point forward it's all about Application Deployments. I want to take the opportuninty to explain the Why in specifically two areas that withou context may not make much sense in why I took the approach I did
+
+### kcgen - the go program
+For the process of generating the "user" kubeconfig it took a non-standard approach that I might not actually leverage in a real production environment.
+
+***Namely, I built a go program to do it.***
+
+The Source for this program can be found (here)[https://github.com/vtrenton/kcgen]
+
+***Why?***
+While this may be uncanny there are a few reasons I did this:
+```
+Fun/Challenge -> I was getting sick of writting shell scripts and wanted to show a different approach.
+Clean automation -> go is a very self contained langauge where everything is statically linked so I'm fairly certain go binaries will work very well and wont rely on the environment.
+Compentancy in go -> I wanted the opportuninty to show off my go/kubernetes automation skillset.
+Personal Project -> I actually have been planning to build this out into an operator (kubebuilder) in the future. This project helped me build out some seperation of concerns.
+```
+
+It's worth noteing I did write a fallback script in scripts/fallback-kcgen.sh. That uses a script to automate it. So the go binary isn't "required" just fun/nice to have.
+
+This binary does the following
+```
+-> Takes a "username" (what is set as the DN of the cert for k8s to use later) from stdin
+Generates a Private Key and CSR (in PEM)
+-> Adds the CSR PEM to a kubernetes Object and deploys it to the cluster.
+-> Appends the approval to the status (same thing `kubectl certificate approve` is doing)
+-> Waits and pulls the signed user cert
+-> uses everything to build a kubeconfig and write it to `$HOME/.kube/` 
+```
+
+This is not critical to the infrastructure or system in any way. So at worse this process can be done manually too.
+
+## Gateway-API
+I opted to include gateway-api in this deployment for a practical reason. While Ingresses may be familiar (and I did make sure include that functionality in the core demo). Gateway-api is the future. So it's not a question of "if" moreso "when". Currently, we can deploy ingress and gateway-api side-by-side so it's beneficial to adopt it when possible.
+
+Gateway-API has many benefits such as cleaner and more defined seperations of concerns between developers and operators making for a much more robust security model.
+
+## Traefik
+With the deprication of `ingress-nginx` it's important to choose a stable and ingress/gateway solution. Personally I have worked with Traefik quite a bit when building k3s so it was the familiar option.
+
 
