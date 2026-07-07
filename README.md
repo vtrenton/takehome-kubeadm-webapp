@@ -25,7 +25,7 @@ I created a script of every step in the RUNNING docs called [go.sh](go.sh)
 ```
 
 ## Infrastructure Details
-For a more detailed layout of the Infrastructure, justifcations and thought process check out the [Infrastructure docs](docs/INFRASTRUCTURE.md)
+For a more detailed layout of the Infrastructure, justifcations and thought process check out the [Infrastructure docs](docs/ARCHITECTURE.md)
 
 ## Tearing down
 Thankfully clean up is actually very easy.
