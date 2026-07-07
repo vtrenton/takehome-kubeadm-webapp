@@ -144,12 +144,12 @@ Generates a Private Key and CSR (in PEM)
 
 This is not critical to the infrastructure or system in any way. So at worse this process can be done manually too.
 
-## Gateway-API
+### Gateway-API
 I opted to include gateway-api in this deployment for a practical reason. While Ingresses may be familiar (and I did make sure include that functionality in the core demo). Gateway-api is the future. So it's not a question of "if" moreso "when". Currently, we can deploy ingress and gateway-api side-by-side so it's beneficial to adopt it when possible.
 
 Gateway-API has many benefits such as cleaner and more defined seperations of concerns between developers and operators making for a much more robust security model.
 
-## Traefik
+### Traefik
 With the deprication of `ingress-nginx` it's important to choose a stable and ingress/gateway solution. Personally I have worked with Traefik quite a bit when building k3s so it was the familiar option.
 
 
