@@ -23,3 +23,12 @@ I created a script of every step in the RUNNING docs called [go.sh](go.sh)
 ```bash
 ./go.sh
 ```
+
+## Tearing down
+Thankfully clean up is actually very easy.
+```
+terraform --chdir=terraform destroy
+rm ~/.kube/nginx-deployer-kubeconfig.yaml
+rm -r out/
+```
+You don't need to do any of the file cleanup for additional redeployments - just terraform destroy.

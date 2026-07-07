@@ -22,8 +22,9 @@ Terraform is a great tool for managing state and has a robust ecosystem for quic
 While I did make sure basic security was accounted for here there a few areas I could have potentially tightened up. A lot of these cases the additional complexity of management just wasn't worth the tradeoff:
 ```
 -> Hardened AMI images could have been used. I didn't patch the system or check for vulnerabilities. This is small but I feel something like this is where a declarative or "cloud-native" immutable OS will shine.
--> Open east <-> west traffic between nodes. while I could have restricted this to known ports between the nodes there are better and more kubernetes native patterns for this such as Ciliums "Host Network Policies" whihc are much more portable for hybrid installs.
+-> Open east <-> west traffic between nodes. while I could have restricted this to known ports between the nodes there are better and more kubernetes native patterns for this such as Ciliums "Host Network Policies" which are much more portable for hybrid installs.
 -> tighter access to Kube-API. Kubernetes secures it's API with mTLS which is pretty strong and depending on the algorithm used is going to be like breaking https. That said for long running infrastructure there is stilla risk of exploits on publically exposed administration services. So depending on the lifecycle of this environment it would be wise to maybe use a Jumphost or even Teleport to avoid accessing it outside of internal endpoints.
+-> Restricting SSH. Much like the Kube-API SSH is protected by strong cryptography making public exposure a potential risk. This is where Teleport or a Bastion comes in handy
 ```
 
 With Security being a tradeoff between complexity cost and Defense I feel I provided the most practical defaults for the request.
@@ -31,4 +32,26 @@ With Security being a tradeoff between complexity cost and Defense I feel I prov
 ### Ansible - Machine configuration
 With the core infrastructure set up we will have access to some bare bones linux nodes. We need to provision them with kubeadm to create a kubernetes cluster. This Ansible code sets up the machines as per install requirements of the [official kubernetes installation guide](https://kubernetes.io/docs/setup/production-environment/tools/kubeadm/install-kubeadm/).
 
+Having ansible is very useful going forward as it allows us to collectively troubleshoot and configure all the nodes to keep them uniform going forward.
+
+
+
+This ansible script will do the following:
+```
+-> disable swap on all the nodes
+-> assure the proper kernel modules are loaded (onverlay, br_netfilter)
+-> Set important sysctls for bridging and overlay.
+-> install base packages.
+-> install containerd
+-> configure containerd to utilized systemd cgroups.
+-> install the kubelet (and addtional kubernetes packages)
+-> Uses kubeadm to initialize the control-plane with the latest version of k8s (currently 1.36)
+-> captures the join command for the workers
+-> builds an admin kubeconfig and sets the endpoint to the public ec2 address
+-> joins the workers to the kubeadm deployed cluster
+```
+
 ***Note: It's worth mentioning that technically nodes can be run with*** [swap activated](https://kubernetes.io/docs/concepts/cluster-administration/swap-memory-management/).
+
+I choose to disable swap to reduce risk and complexity of management in this case.
+
