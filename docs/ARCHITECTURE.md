@@ -2,7 +2,7 @@
 
 In this document I hope to show the current architecture as it's laid out by this repo. I will go over some of the choices I made and why for each part.
 
-[<img src="../assets/infrastructure.png" alt="Infrastructure Diagram" width="500">](../assets/infrastructure.png)
+[<img src="../assets/architecture.png" alt="Infrastructure Diagram" width="500">](../assets/architecture.png)
 
 ## Why so many automation tools?
 This is a question that seemingly comes up quite a bit. The short answer is seperations of concerns. But let's take a look at our stack and talk through what it is all doing and why it's isolationed like it its.
