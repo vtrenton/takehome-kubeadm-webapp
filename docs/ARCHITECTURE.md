@@ -83,6 +83,8 @@ Currently, our kubernetes control-plane is on a single node so it is not HA. If 
 Another model for 3 nodes would be to allow scheduling onto the control plane and have all three nodes run as control-plane AND workers. It's generally not advised to run workloads on the same nodes as etcd specifically as etcd is very latency sensative around networking and i/o heartbeats. For a small web app workload the tradeoff is negliable.
 
 ### Core Workloads - Foundational cluster applications.
+While Ansible is useful for node configuration and can technically accomplish the cluster configuration tasks I wanted to keep it in it's own lane as strictly node configuration. Ideally we want as strict of a gitops pattern as possible from this point forward... but we need a GitOps tool and Networking to solve this. We are now in the 'configuation uncanny valley' as I like to call it. We might be able to bootstrap some of these services on cluster deployment via the [kubernetes static manifest directory](https://kubernetes.io/docs/tasks/configure-pod-container/static-pod/) but this is a bit excessive and overengineered. Rather, lets just use a simple shell script with helm to deploy these programs.
+
 Ansible will leave us with a working cluster in the sense of being able to access certain resources but the nodes will show as "Not Ready" due to the lack of networking. This script will deploy the following resources:
 ```
 -> Cilium CNI (With Hubble but not exposed)
@@ -134,7 +136,10 @@ The Kubernetes cluster itself is on top of 1 control-plane node and two worker n
 The Cluster itself is using kube-proxy in the default iptables mode. There are clear avantages to nftables mode such as O(1) (constant resource scaling) vs O(n) (linear) resource scaling. This would be high on my list to swap out if this cluster were to grow past the point of a simple webapp. But I left it at iptables mode and no Cilium KPR for simplicity.
 
 ### Cluster Storage
-No applications require storage in this cluster so no CSI provider was installed
+No applications require storage in this cluster so no CSI provider was installed.
+
+### Observablilty
+While useful for larger deployments workload Observablilty is incredibly limited in this context. The only thing we really added that will help here is the metrics-server which gives us the ability to more closely monitor workload health and provide info to other services such as the Kubernetes Horizontal Pod Autoscaler in the future.
 
 ### Backup/Recovery
 The cluster itself is stateless and declarative top to bottom which means we can leverage the GitOps pattern and keep this cluster idepotent and agile. Because of this there is no actual need for a formal backup solution to store "state" of any kind.
