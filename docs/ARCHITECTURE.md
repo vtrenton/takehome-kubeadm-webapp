@@ -115,6 +115,11 @@ It's worth noting that using cilium without KPR (Kube-Proxy Replacement) require
 Externally, I can hit gateway-api using the published web/websecure ports. But Gateway Objects need to hit the trafik pod on it's "gateway" ports which are `8000` for `web` and `8443` for `websecure` respectively.
 
 
+## Kubernetes Architecture
+
+[<img src="../assets/kubernetes-diagram.png" alt="k8s Diagram" width="500">](../assets/kubernetes-diagram.png)
+
+
 ## Odd-balls or "why did you include that?"
 From this point forward it's all about Application Deployments. I want to take the opportuninty to explain the Why in specifically two areas that withou context may not make much sense in why I took the approach I did
 
