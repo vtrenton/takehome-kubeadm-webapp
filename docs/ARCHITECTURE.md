@@ -39,6 +39,10 @@ Having ansible is very useful going forward as it allows us to collectively trou
 
 For example I can run several commands on every node for troubleshoot!
 ```
+ANSIBLE_CONFIG=ansible/ansible.cfg ansible -i ansible/inventory.ini \
+  -m shell \
+  -a 'ping -c1 127.0.0.1' \
+  --private-key out/kubeadm-gateway_ed25519
 ```
 
 This ansible script will do the following:
