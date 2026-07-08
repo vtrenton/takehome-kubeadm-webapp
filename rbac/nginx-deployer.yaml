@@ -14,9 +14,15 @@ rules:
     resources:
       - configmaps
       - services
-      - pods
       - secrets
     verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+
+  # The replicaset controller (managed by the deployment) will manage the deployments of pods
+  # There is no reason our dev user needs to directly create pods.
+  - apiGroups: [""]
+    resources:
+      - pods
+    verbs: ["get", "list", "watch"]
 
   # Give devs access to logs to troubleshoot
   - apiGroups: [""]
@@ -28,8 +34,13 @@ rules:
   - apiGroups: ["apps"]
     resources:
       - deployments
-      - replicasets
     verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+
+  # Deployment will create replicasets, No reason for create permission
+  - apiGroups: ["apps"]
+    resources:
+      - replicasets
+    verbs: ["get", "list", "watch"]
 
   - apiGroups: ["networking.k8s.io"]
     resources:
