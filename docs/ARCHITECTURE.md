@@ -29,7 +29,7 @@ While I did make sure basic security was accounted for here there a few areas I 
 With Security being a tradeoff between complexity cost and Defense I feel I provided the most practical defaults for the request.
 
 ***Why the LB?***
-One of the requirements was to have more than a single worker node. Putting a LoadBalancer in front of the nodes was a low cost way of creating HA.
+One of the requirements was to have more than a single worker node. Putting a LoadBalancer in front of the nodes was a low cost way of creating HA for the applications.
 
 ### Ansible - Machine configuration
 Ansible is a powerful configuration management engine that allows for declarative automation against many machines. Terraform has some tools for machine management but I feel Ansible has a much stronger story here.
@@ -127,6 +127,29 @@ Externally, I can hit gateway-api using the published web/websecure ports. But G
 
 [<img src="../assets/kubernetes-diagram.png" alt="k8s Diagram" width="500">](../assets/kubernetes-diagram.png)
 
+### Cluster layout
+The Kubernetes cluster itself is on top of 1 control-plane node and two worker nodes. Having two worker nodes means an application that is deployed with >1 replica can portentially leverage high availability.
+
+### Cluster Networking
+The Cluster itself is using kube-proxy in the default iptables mode. There are clear avantages to nftables mode such as O(1) (constant resource scaling) vs O(n) (linear) resource scaling. This would be high on my list to swap out if this cluster were to grow past the point of a simple webapp. But I left it at iptables mode and no Cilium KPR for simplicity.
+
+### Cluster Storage
+No applications require storage in this cluster so no CSI provider was installed
+
+### Backup/Recovery
+The cluster itself is stateless and declarative top to bottom which means we can leverage the GitOps pattern and keep this cluster idepotent and agile. Because of this there is no actual need for a formal backup solution to store "state" of any kind.
+
+### Auditing
+To save disk space on the cheap root volumes I choose not to enable Kubernetes Audit logging. But Kubernetes Audit logging is an incredibly powerful troubleshooting tool as it can be used to review request/response to the API server. This is not only useful for Security but for troubleshooting rouge automation as well. This is something a production cluster would likely have.
+
+### User Access
+Described in more detail in the [RBAC](docs/RBAC.md) Documentation. But Follows standard practice of principal of least priveleged and explicate permissions.
+
+### Ingress
+Traefik was chosen as the L7 gateway/ingress for  this cluster and runs as the HostPort on each worker node. The external l4 loadbalancer handles backend requests to these endpoints. More reasoning for this decision is discussed below.
+
+### GitOps
+ArgoCD was chosen as the Application to facilitate the GitOps patterns for deployments. ArgoCD is an incredilby popular CNCF Graduated tool for facilitate repository syncronization.
 
 ## Odd-balls or "why did you include that?"
 From this point forward it's all about Application Deployments. I want to take the opportuninty to explain the Why in specifically two areas that withou context may not make much sense in why I took the approach I did
