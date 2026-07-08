@@ -143,7 +143,7 @@ The cluster itself is stateless and declarative top to bottom which means we can
 To save disk space on the cheap root volumes I choose not to enable Kubernetes Audit logging. But Kubernetes Audit logging is an incredibly powerful troubleshooting tool as it can be used to review request/response to the API server. This is not only useful for Security but for troubleshooting rouge automation as well. This is something a production cluster would likely have.
 
 ### User Access
-Described in more detail in the [RBAC](docs/RBAC.md) Documentation. But Follows standard practice of principal of least priveleged and explicate permissions.
+Described in more detail in the [RBAC](RBAC.md) Documentation. But Follows standard practice of principal of least priveleged and explicate permissions.
 
 ### Ingress
 Traefik was chosen as the L7 gateway/ingress for  this cluster and runs as the HostPort on each worker node. The external l4 loadbalancer handles backend requests to these endpoints. More reasoning for this decision is discussed below.
