@@ -3,9 +3,8 @@
 In this document I hope to show the current architecture as it's laid out by this repo. I will go over some of the choices I made and why for each part.
 
 [<img src="../assets/architecture.png" alt="Infrastructure Diagram" width="500">](../assets/architecture.png)
-
-## Why so many automation tools?
-This is a question that seemingly comes up quite a bit. The short answer is seperations of concerns. But let's take a look at our stack and talk through what it is all doing and why it's isolationed like it its.
+## Infrastructure automation and Seperation of Concerns
+In this project I used a few different automation tools to accomplish the goals. Each tool has a clear defnition of the area that it excels in. Below I hope to show why I chose the tools I did for the given task as well as what the tool is doing for the greater project.
 
 ### Terraform - Infrastructure provisoning and lifecycle
 Terraform is a great tool for managing state and has a robust ecosystem for quickly provisioning state in a declarative manner. For this reason it's a great tool for spinning up nodes with images on them, Node network architecture, loadbalancers, DNS and other auxilary services.
@@ -33,17 +32,26 @@ With Security being a tradeoff between complexity cost and Defense I feel I prov
 One of the requirements was to have more than a single worker node. Putting a LoadBalancer in front of the nodes was a low cost way of creating HA.
 
 ### Ansible - Machine configuration
-With the core infrastructure set up we will have access to some bare bones linux nodes. We need to provision them with kubeadm to create a kubernetes cluster. This Ansible code sets up the machines as per install requirements of the [official kubernetes installation guide](https://kubernetes.io/docs/setup/production-environment/tools/kubeadm/install-kubeadm/).
+Ansible is a powerful configuration management engine that allows for declarative automation against many machines. Terraform has some tools for machine management but I feel Ansible has a much stronger story here.
 
-Having ansible is very useful going forward as it allows us to collectively troubleshoot and configure all the nodes to keep them uniform going forward.
+Having ansible is also very useful as it allows us to collectively troubleshoot and configure all the nodes to keep them uniform going forward.
 
 For example I can run several commands on every node for troubleshoot!
-```
-ANSIBLE_CONFIG=ansible/ansible.cfg ansible -i ansible/inventory.ini \
+```bash
+# All the nodes
+ANSIBLE_CONFIG=ansible/ansible.cfg ansible -i ansible/inventory.ini all\
   -m shell \
-  -a 'ping -c1 127.0.0.1' \
+  -a 'ping -c1 google.com' \
+  --private-key out/kubeadm-gateway_ed25519
+
+# Or test the ingress on the workers!
+ANSIBLE_CONFIG=ansible/ansible.cfg ansible -i ansible/inventory.ini workers\
+  -m shell \
+  -a 'curl -k -I -H "Host: webapp.local" https://localhost' \
   --private-key out/kubeadm-gateway_ed25519
 ```
+
+With the core infrastructure set up we will have access to some bare bones linux nodes. We need to provision them with kubeadm to create a kubernetes cluster. This Ansible code sets up the machines as per install requirements of the [official kubernetes installation guide](https://kubernetes.io/docs/setup/production-environment/tools/kubeadm/install-kubeadm/).
 
 This ansible script will do the following:
 ```
