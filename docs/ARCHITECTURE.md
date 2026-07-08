@@ -152,7 +152,7 @@ Traefik was chosen as the L7 gateway/ingress for  this cluster and runs as the H
 ArgoCD was chosen as the Application to facilitate the GitOps patterns for deployments. ArgoCD is an incredilby popular CNCF Graduated tool for facilitate repository syncronization.
 
 ## Odd-balls or "why did you include that?"
-From this point forward it's all about Application Deployments. I want to take the opportuninty to explain the Why in specifically two areas that withou context may not make much sense in why I took the approach I did
+There are a few design choices I made from the outside-looking-in I feel might not make a lot of sense as to why I chose to go with them. This section is to explain my reasoning for incorporating these "odd-ball" approaches.
 
 ### kcgen - the go program
 For the process of generating the "user" kubeconfig it took a non-standard approach that I might not actually leverage in a real production environment.
