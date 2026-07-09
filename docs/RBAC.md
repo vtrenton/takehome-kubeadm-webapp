@@ -56,3 +56,25 @@ Pods are managed by replicasets which are managed by the deployemnts. Much like 
 
 ***Pods/Logs:***
 It's worth noteing that there is a subresource of pod that we want called Logs. This will allow our devs to see the stdout and stderr of their application in a read only manner to troubleshoot their deployments.
+
+## Default Deny
+Lastly, it's important to note that users will not have access to the resources not explicitaly granted these permissions and because this is a role ONLY the namespace that this role is in. We can verify a lot of these permissions with `kubectl auth can-i`
+```bash
+$ kubectl --kubeconfig $HOME/.kube/nginx-deployer-kubeconfig.yaml \
+-n nginx-manual \
+auth can-i get pods --subresource=log
+yes
+$ kubectl --kubeconfig $HOME/.kube/nginx-deployer-kubeconfig.yaml \
+-n nginx-manual \
+auth can-i get pods --subresource=exec
+no
+$ kubectl --kubeconfig $HOME/.kube/nginx-deployer-kubeconfig.yaml \
+-n nginx-manual \
+auth can-i create pod
+no
+$ kubectl --kubeconfig $HOME/.kube/nginx-deployer-kubeconfig.yaml \
+-n nginx-manual \
+auth can-i create deployment
+yes
+
+```
