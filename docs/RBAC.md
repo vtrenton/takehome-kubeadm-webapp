@@ -19,7 +19,7 @@ The main difference between "roles" and "clusterroles" is "roles" are namespaced
 
 Let's start with the resources that are given full read and write access within the cluster.
 
-### ingress resources
+### Ingress resources
 The user will need to create both traditional ingress objects as well as Gateway-api "gateway" configurations as well as httproutes for their webapp for this reason the user needs to be able to directly create, read, modify and update these resources. They are a part of the applications core pattern and something a developer would likely need access to. These resources are:
 
 ```
@@ -27,3 +27,32 @@ ingresses.networking.k8s.io
 gateways.gateway.networking.k8s.io
 httproutes.gateway.networking.k8s.io
 ```
+### Services
+Consiquently of creating their own networking. Publishing static service endpoints is pretty important. For this reason the Developer is granted full access to the Services.
+
+### Certificate Management Resources
+The user will need to be able set up an Issuer and Certificate Object which will create and maintain the TLS secret. In this case the issuer we're configuring is generating self-signed Certificates. In a production deployment we would use signed Certificates from a Trusted CA.
+
+The list of these resources which will have full read and write access are:
+```
+issuers.cert-manager.io
+certificates.cert-manager.io
+```
+It's worth noting that some times the issuer is deployed and maintained by the administrator so the devs can consume them. This is not really needed for the current approch but a valid callout none-the-less
+
+### Secrets
+The Secrets resource is special and we can see we have full access to it. But the reason is intentional. Helm stores release state information in secrets. Now this can be bypassed by setting `HELM_DRIVER=configmap` to use a configmap instead.
+But this creates additional user toil and an extra avenue for errors. Meanwhile, we have to thing that someone who has access to Deployments in a namespace already has access to secrets. The user could simply mount the secret and export it as an ENV VAR.
+Because of this the developer is granted access to the secrets **only in the application namespace**
+
+### Deployments
+The Developer will be creating deployment specs for their application that will be managed by the deployment controller. The deployment controller will build the proper replicasets and pods from this spec and deploy them for the user.
+
+### Replicasets
+The replicasets will be managed by the controller directly. Developers can view them for troubleshooting purposes but should not be directly creating or deleting them.
+
+### Pods
+Pods are managed by replicasets which are managed by the deployemnts. Much like the replicaset itself. There is little reason a user needs to create a pod outside of a deployment. For this reason, users can see the running pods but CANNOT create or delete them. That will need to be handled by an Admin.
+
+***Pods/Logs:***
+It's worth noteing that there is a subresource of pod that we want called Logs. This will allow our devs to see the stdout and stderr of their application in a read only manner to troubleshoot their deployments.
